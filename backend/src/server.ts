@@ -1,4 +1,4 @@
-﻿import { createApp } from './app.js';
+import { createApp } from './app.js';
 import { config } from './config/env.js';
 import { runMigrations, destroyDb } from './db/index.js';
 import { startScheduler } from './services/scheduler.js';

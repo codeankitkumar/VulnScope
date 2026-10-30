@@ -1,4 +1,4 @@
-﻿import { getDb } from '../db/index.js';
+import { getDb } from '../db/index.js';
 import type { PublicUser } from '../types/index.js';
 import { listProjectsForUser } from './project.service.js';
 

@@ -1,4 +1,4 @@
-﻿import type { FindingSeverity } from '../types/index.js';
+import type { FindingSeverity } from '../types/index.js';
 
 export interface RiskInput {
   cvssScore: number | null;

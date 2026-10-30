@@ -1,4 +1,4 @@
-﻿import request from 'supertest';
+import request from 'supertest';
 import { getDb } from '../src/db/index.js';
 import { createApp } from '../src/app.js';
 import type { PublicUser } from '../src/types/index.js';

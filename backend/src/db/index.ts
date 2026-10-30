@@ -1,7 +1,10 @@
-﻿import knex, { type Knex } from 'knex';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import knex, { type Knex } from 'knex';
 import { config } from '../config/env.js';
 
 let db: Knex | null = null;
+const HERE = path.dirname(fileURLToPath(import.meta.url)); // .../db (src or dist)
 
 function buildKnex(): Knex {
   return knex({
@@ -23,7 +26,10 @@ export function getDb(): Knex {
   return db;
 }
 
-export async function runMigrations(migrationsDir = './src/db/migrations'): Promise<void> {
+/** Run schema migrations. Path resolves relative to this module so it works
+ * both under tsx (src) and the compiled dist output. */
+export async function runMigrations(): Promise<void> {
+  const migrationsDir = path.join(HERE, 'migrations');
   await getDb().migrate.latest({ directory: migrationsDir });
 }
 

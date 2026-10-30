@@ -1,4 +1,4 @@
-﻿import express, { type Express } from 'express';
+import express, { type Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import swaggerJsdoc from 'swagger-jsdoc';

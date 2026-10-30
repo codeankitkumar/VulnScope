@@ -1,4 +1,4 @@
-﻿import type { PublicUser, Role } from './index.js';
+import type { PublicUser, Role } from './index.js';
 
 declare global {
   namespace Express {

@@ -10,7 +10,7 @@ import {
   assertProjectAccess,
 } from '../services/project.service.js';
 import { listTargetsForProject } from '../services/target.service.js';
-import { listScansForProject } from '../services/scan.service.js';
+import { listScansForProject, listFindingsForProject } from '../services/scan.service.js';
 import { recordAudit } from '../services/audit.service.js';
 
 const router = Router();
@@ -18,7 +18,7 @@ router.use(requireAuth);
 
 const createSchema = z.object({ name: z.string().min(1).max(255), description: z.string().max(2000).optional() });
 
-/** POST /api/projects — create a project (analyst+). */
+/** POST /api/projects â€” create a project (analyst+). */
 router.post(
   '/',
   validate(createSchema),
@@ -29,7 +29,7 @@ router.post(
   }),
 );
 
-/** GET /api/projects — list projects the user can access. */
+/** GET /api/projects â€” list projects the user can access. */
 router.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -40,7 +40,7 @@ router.get(
 
 const idParam = z.object({ id: z.string().uuid() });
 
-/** GET /api/projects/:id — project detail. */
+/** GET /api/projects/:id â€” project detail. */
 router.get(
   '/:id',
   validate(idParam, 'params'),
@@ -50,7 +50,7 @@ router.get(
   }),
 );
 
-/** GET /api/projects/:id/targets — targets within a project. */
+/** GET /api/projects/:id/targets â€” targets within a project. */
 router.get(
   '/:id/targets',
   validate(idParam, 'params'),
@@ -60,7 +60,7 @@ router.get(
   }),
 );
 
-/** GET /api/projects/:id/scans — scan history for a project. */
+/** GET /api/projects/:id/scans â€” scan history for a project. */
 router.get(
   '/:id/scans',
   validate(idParam, 'params'),
@@ -70,7 +70,17 @@ router.get(
   }),
 );
 
-/** DELETE /api/projects/:id — remove a project (owner/admin). */
+/** GET /api/projects/:id/findings — findings for a project. */
+router.get(
+  '/:id/findings',
+  validate(idParam, 'params'),
+  asyncHandler(async (req, res) => {
+    const findings = await listFindingsForProject(req.user!, req.params.id);
+    res.json({ findings });
+  }),
+);
+
+/** DELETE /api/projects/:id â€” remove a project (owner/admin). */
 router.delete(
   '/:id',
   validate(idParam, 'params'),

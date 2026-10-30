@@ -1,4 +1,4 @@
-﻿import { getDb } from '../db/index.js';
+import { getDb } from '../db/index.js';
 import { newId, createToken } from '../utils/ids.js';
 import { AppError } from '../utils/http.js';
 import type { PublicUser, Target, TargetKind } from '../types/index.js';

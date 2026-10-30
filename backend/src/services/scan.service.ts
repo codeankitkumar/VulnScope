@@ -1,4 +1,4 @@
-﻿import { getDb } from '../db/index.js';
+import { getDb } from '../db/index.js';
 import { newId } from '../utils/ids.js';
 import { AppError } from '../utils/http.js';
 import type { Finding, PublicUser, Scan } from '../types/index.js';

@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { getDb } from '../src/db/index.js';
 import { app, authToken, createProject, createTarget, prepareTargetForScan } from './helpers.js';

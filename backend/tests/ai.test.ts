@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { assistant } from '../src/services/ai.service.js';
 import type { Finding } from '../src/types/index.js';
 

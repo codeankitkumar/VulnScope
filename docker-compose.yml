@@ -1,0 +1,80 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PGUSER:-vulnscope}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-vulnscope}
+      POSTGRES_DB: ${PGDATABASE:-vulnscope}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-vulnscope}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  zap:
+    # OWASP ZAP headless daemon used for safe web scanning via its REST API.
+    image: ghcr.io/zaproxy/zaproxy:stable
+    restart: unless-stopped
+    command:
+      - zap.sh
+      - -daemon
+      - -host
+      - 0.0.0.0
+      - -port
+      - "8090"
+      - -config
+      - api.addrs.addr.name=.*
+      - -config
+      - api.addrs.addr.regex=true
+      - -config
+      - api.key=${ZAP_API_KEY:-vulnscope-zap-key}
+      - -config
+      - api.disablekey=false
+    user: zap
+    ports:
+      - "8090:8090"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8090/"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:8080}
+      JWT_SECRET: ${JWT_SECRET:-change-me-to-a-long-random-string}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${PGDATABASE:-vulnscope}
+      PGUSER: ${PGUSER:-vulnscope}
+      PGPASSWORD: ${PGPASSWORD:-vulnscope}
+      NVD_API_KEY: ${NVD_API_KEY:-}
+      ZAP_BASE_URL: http://zap:8090
+      ZAP_API_KEY: ${ZAP_API_KEY:-vulnscope-zap-key}
+      USE_EXTERNAL_LLM: ${USE_EXTERNAL_LLM:-false}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:

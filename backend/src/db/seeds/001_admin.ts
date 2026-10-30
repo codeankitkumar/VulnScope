@@ -1,4 +1,4 @@
-﻿import bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import type { Knex } from 'knex';
 

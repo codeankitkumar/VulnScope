@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import { getDb } from '../db/index.js';
 import { config } from '../config/env.js';
 

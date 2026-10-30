@@ -1,4 +1,4 @@
-﻿import { beforeEach, afterEach } from 'vitest';
+import { beforeEach, afterEach } from 'vitest';
 import { getDb, runMigrations, destroyDb } from '../src/db/index.js';
 
 /**

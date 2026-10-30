@@ -1,4 +1,4 @@
-﻿import crypto from 'node:crypto';
+import crypto from 'node:crypto';
 import cron from 'node-cron';
 import { getDb } from '../db/index.js';
 import { executeScan } from './scan.service.js';

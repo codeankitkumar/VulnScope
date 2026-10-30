@@ -20,9 +20,9 @@ reporting into a single, self-hosted, Docker-deployable platform.
 
 - 🔐 **Target management** – registration, ownership verification, project scoping,
   scan scheduling, scan history.
-- 🌐 **Vulnerability scanning** – Nmap port/service discovery, OWASP ZAP passive &
-  safe-active web tests, technology fingerprinting, HTTP security-header checks,
-  TLS configuration checks, and a basic OWASP Top 10 assessment.
+- 🌐 **Vulnerability scanning** – Nmap port/service discovery, safe-active OWASP ZAP
+  web testing, technology fingerprinting, HTTP security-header checks, TLS
+  configuration checks, and a basic OWASP Top 10 assessment.
 - 🧠 **Vulnerability intelligence** – NVD (National Vulnerability Database) CVE
   retrieval, CWE mapping, CVSS scores, affected-version matching, references and
   remediation advice. Version matches are clearly **not** treated as proof of
@@ -48,10 +48,10 @@ reporting into a single, self-hosted, Docker-deployable platform.
 
 | Layer      | Technology                                                              |
 |------------|-------------------------------------------------------------------------|
-| Backend    | Node.js, TypeScript, Express, Knex, JWT, bcrypt, node-cron, pdfkit       |
-| Database   | SQLite (dev/test) or PostgreSQL (production)                             |
-| Frontend   | React 18, TypeScript, Vite, react-router-dom, plain CSS                  |
-| Scanners   | Nmap, OWASP ZAP (headless), Node-based HTTP/TLS/fingerprint checks       |
+| Backend    | Node.js 20, TypeScript, Express, Knex, JWT, bcrypt, node-cron, pdfkit    |
+| Database   | PostgreSQL 16 (production, dev, and test)                               |
+| Frontend   | React 18, TypeScript, Vite, react-router-dom, nginx                      |
+| Scanners   | Nmap, OWASP ZAP (headless REST daemon), Node-based HTTP/TLS/fingerprint  |
 | CVE data   | NVD API v2 (https://nvd.nist.gov/developers)                             |
 | AI         | Built-in rule-based assistant + optional OpenAI-compatible LLM adapter   |
 | Deploy     | Docker & Docker Compose                                                  |
@@ -67,38 +67,51 @@ VulnScope/
 │       ├── routes/    # HTTP API routes
 │       ├── services/  # business logic (auth, scan, cve, risk, ai, report)
 │       ├── middleware/# jwt, rbac, rate-limit, errors, validation
-│       ├── db/        # knex + migrations
+│       ├── db/        # knex + migrations + seeds
 │       ├── config/    # environment loading
 │       └── types/     # shared TypeScript types
-├── frontend/          # React SPA (dashboard, targets, scans, findings, etc.)
-├── scanner/           # Docker image with Nmap + ZAP worker scripts
+├── frontend/          # React SPA (dashboard, projects, targets, scans, ...)
+├── scanner/           # optional isolated Nmap/zap-cli worker image
 ├── docs/              # API documentation
 └── docker-compose.yml
 ```
 
 ---
 
-## Getting Started (Quick Start with Docker)
+## Quick Start (Docker)
 
 ```bash
-cp .env.example .env        # edit secrets
+cp .env.example .env       # edit secrets (JWT_SECRET, DB password, etc.)
 docker compose up --build
-# Frontend:  http://localhost:5173
-# Backend:   http://localhost:4000   (Swagger at /api/docs)
+# Frontend:  http://localhost:8080
+# Backend:   http://localhost:4000   (health /api/health, Swagger /api/docs)
 ```
 
----
+`docker compose up` starts PostgreSQL, OWASP ZAP, the backend (with Nmap), and
+the nginx-served frontend. Tables are migrated automatically on backend boot.
+Create your first account at `/register`.
 
 ## Local Development
+
+### Infrastructure
+
+```bash
+docker run -d --name vulnscope-pg \
+  -e POSTGRES_USER=vulnscope -e POSTGRES_PASSWORD=vulnscope -e POSTGRES_DB=vulnscope \
+  -p 5432:5432 postgres:16-alpine
+# create a test database:
+docker exec vulnscope-pg psql -U vulnscope -d vulnscope -c "CREATE DATABASE vulnscope_test;"
+```
 
 ### Backend
 
 ```bash
 cd backend
-cp .env.example .env
+cp .env.example .env        # set PGHOST=127.0.0.1 etc.
 npm install
-npx knex migrate:latest      # create schema (SQLite by default)
-npm run dev
+npm run migrate             # apply schema
+npm run seed                # seed an admin (optional)
+npm run dev                 # http://localhost:4000
 ```
 
 ### Frontend
@@ -106,39 +119,42 @@ npm run dev
 ```bash
 cd frontend
 npm install
-npm run dev                  # http://localhost:5173
+npm run dev                 # http://localhost:5173 (proxies /api -> :4000)
 ```
 
 ### Tests
 
 ```bash
 cd backend
-npm test                     # Vitest unit & integration tests
+npm test                    # Vitest unit + integration tests (needs the Postgres test DB)
 ```
 
 ---
 
 ## Environment Variables
 
-See [.env.example](./.env.example). All secrets are documented there. A real
+See [.env.example](./.env.example). All secrets are documented there; a real
 `.env` is never committed.
 
 ---
 
 ## API Documentation
 
-Interactive Swagger docs are served at `/api/docs` when the backend runs. See
-[docs/API.md](./docs/API.md) for a written reference.
+Interactive Swagger docs are served at `/api/docs`. A written reference is in
+[docs/API.md](./docs/API.md).
 
 ---
 
-## Security & Deployment Notes
+## How Scanning Safety Works
 
-- Scans run in an isolated Docker service with Nmap/ZAP and cannot reach the
-  control-plane database directly.
-- Only allowlisted, ownership-verified targets are scheduled.
-- Every mutating action is written to the audit log.
-- Secrets are injected via environment variables; `.env` is gitignored.
+1. **Registration** – a target is added to a project.
+2. **Ownership verification** – a one-time token is generated and delivered
+   out-of-band; the target owner must present it plus their contact to verify.
+3. **Allowlisting** – only allowlisted, verified targets may be scheduled.
+4. **Isolation** – Nmap runs inside the backend container; OWASP ZAP runs in its
+   own container. No destructive testing.
+5. **Evidence & confidence** – every finding carries evidence and is tagged
+   `confirmed` or `possible`; NVD version matches are advisory, never proof.
 
 ---
 
