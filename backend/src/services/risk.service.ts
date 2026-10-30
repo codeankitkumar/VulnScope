@@ -1,4 +1,4 @@
-import type { FindingSeverity } from '../types/index.js';
+﻿import type { FindingSeverity } from '../types/index.js';
 
 export interface RiskInput {
   cvssScore: number | null;
@@ -74,6 +74,12 @@ export function computeRisk(input: RiskInput): RiskOutput {
   else if (score >= 0.5) severity = 'low';
   else severity = 'info';
 
+  // CVSS floor: keep severity at least as high as the CVSS-derived band.
+  const cvssSeverity: FindingSeverity =
+    (cvssScore ?? 0) >= 9 ? 'critical' : (cvssScore ?? 0) >= 7 ? 'high' : (cvssScore ?? 0) >= 4 ? 'medium' : (cvssScore ?? 0) >= 0.1 ? 'low' : 'info';
+  const rank: Record<FindingSeverity, number> = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+  if (rank[cvssSeverity] > rank[severity]) severity = cvssSeverity;
+
   const drivers: string[] = [];
   if (cvss >= 0.7) drivers.push(`High CVSS (${cvssScore})`);
   if (exploitAvailability >= 0.7) drivers.push('Public exploit available');
@@ -88,3 +94,5 @@ export function computeRisk(input: RiskInput): RiskOutput {
 
   return { score: Number(score.toFixed(2)), severity, factors: { ...factorScores, rawScore: score }, explanation };
 }
+
+

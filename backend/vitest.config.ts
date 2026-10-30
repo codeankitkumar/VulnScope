@@ -11,7 +11,7 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     env: {
       NODE_ENV: 'test',
-      PGHOST: 'localhost',
+      PGHOST: '127.0.0.1',
       PGPORT: '5432',
       PGDATABASE: 'vulnscope_test',
       PGUSER: 'vulnscope',
@@ -20,3 +20,4 @@ export default defineConfig({
     },
   },
 });
+
